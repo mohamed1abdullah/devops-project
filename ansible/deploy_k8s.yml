@@ -54,3 +54,12 @@
 
     - name: Deploy Frontend to Kubernetes
       command: k3s kubectl apply -f /home/ubuntu/k8s/frontend.yaml
+
+    - name: Restart backend
+      command: sudo k3s kubectl rollout restart deployment backend
+
+    - name: Restart frontend
+      command: sudo k3s kubectl rollout restart deployment frontend
+
+    - name: Restart mongodb
+      command: sudo k3s kubectl rollout restart deployment mongodb
