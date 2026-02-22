@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps 3-Tier App</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f9; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: inline-block; }
+        h1 { color: #333; }
+        #status { font-weight: bold; color: #007bff; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>DevOps Master Project 🚀</h1>
+        <p>Frontend is running successfully.</p>
+        <button onclick="checkBackend()">Check Backend & DB Status</button>
+        <div id="status">Waiting for action...</div>
+    </div>
+
+    <script>
+        // في المراحل المتقدمة سنقوم بتغيير هذا الرابط ديناميكياً
+        const backendUrl = 'http://localhost:5000/api/status';
+
+        async function checkBackend() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = "Checking...";
+            statusDiv.style.color = "orange";
+
+            try {
+                const response = await fetch(backendUrl);
+                const data = await response.json();
+                
+                if (data.databaseConnected) {
+                    statusDiv.innerHTML = `✅ Success: ${data.message} (DB is Connected)`;
+                    statusDiv.style.color = "green";
+                } else {
+                    statusDiv.innerHTML = `⚠️ Warning: ${data.message} (DB is NOT Connected)`;
+                    statusDiv.style.color = "red";
+                }
+            } catch (error) {
+                statusDiv.innerHTML = "❌ Error: Cannot connect to Backend!";
+                statusDiv.style.color = "red";
+            }
+        }
+    </script>
+</body>
+</html>
