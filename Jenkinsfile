@@ -4,13 +4,13 @@ pipeline {
     // تعريف المتغيرات
     environment {
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
-        DOCKERHUB_USERNAME = "mohamed010" // 🔴 غيّر هذا باسم حسابك في Docker Hub
+        DOCKERHUB_USERNAME = "mohamed010"
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                // 🔴 غيّر هذا برابط الجيت هاب الخاص بك
+
                 git branch: 'main', url: 'https://github.com/mohamed1abdullah/devops-project.git'
             }
         }
