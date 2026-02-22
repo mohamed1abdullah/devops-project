@@ -1,0 +1,56 @@
+---
+- name: Setup Kubernetes (K3s) and Deploy 3-Tier App
+  hosts: kubernetes
+  become: yes
+  tasks:
+    - name: Download and install K3s
+      shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Create .kube directory for ubuntu user
+      file:
+        path: /home/ubuntu/.kube
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: '0755'
+
+    - name: Copy K3s config file so ubuntu user can use kubectl
+      copy:
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: /home/ubuntu/.kube/config
+        remote_src: yes
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+
+    - name: Wait for Kubernetes node to be ready
+      command: k3s kubectl get nodes
+      register: nodes_output
+      until: nodes_output.stdout.find("Ready") != -1
+      retries: 10
+      delay: 10
+
+    - name: Create k8s directory on the remote server
+      file:
+        path: /home/ubuntu/k8s
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Copy local k8s manifest files to the remote server
+      copy:
+        src: ../k8s/
+        dest: /home/ubuntu/k8s/
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Deploy MongoDB to Kubernetes
+      command: k3s kubectl apply -f /home/ubuntu/k8s/mongo.yaml
+
+    - name: Deploy Backend to Kubernetes
+      command: k3s kubectl apply -f /home/ubuntu/k8s/backend.yaml
+
+    - name: Deploy Frontend to Kubernetes
+      command: k3s kubectl apply -f /home/ubuntu/k8s/frontend.yaml

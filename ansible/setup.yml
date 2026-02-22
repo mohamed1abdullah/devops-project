@@ -1,0 +1,89 @@
+---
+# الجزء الأول: تثبيت Docker على كل السيرفرات
+- name: Install Docker on all servers
+  hosts: all
+  become: yes # لتنفيذ الأوامر بصلاحيات الـ Root (sudo)
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add 'ubuntu' user to docker group (to run docker without sudo)
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+# الجزء الثاني: تثبيت Jenkins على سيرفر الـ CI/CD فقط
+- name: Install Jenkins on Jenkins Server
+  hosts: jenkins
+  become: yes
+  tasks:
+
+    - name: Remove old Jenkins repository if exists
+      file:
+        path: /etc/apt/sources.list.d/jenkins.list
+        state: absent
+
+    - name: Ensure keyrings directory exists
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Install required packages
+      apt:
+        name:
+          - openjdk-17-jdk
+          - ca-certificates
+          - curl
+        state: present
+        update_cache: yes
+
+    - name: Download Jenkins GPG key (2026)
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+        dest: /etc/apt/keyrings/jenkins-keyring.asc
+        mode: '0644'
+
+    - name: Add Jenkins repository
+      apt_repository:
+        repo: deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+        state: present
+        filename: jenkins
+        update_cache: yes
+
+    - name: Install Jenkins
+      apt:
+        name: jenkins
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Jenkins service
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: add docker group
+      shell: sudo usermod -aG docker jenkins && sudo systemctl restart jenkins
+
+    - name: Get Jenkins password
+      shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+      changed_when: false
+      register: result
+
+    - name: Password to "Unlock Jenkins"
+      debug:
+        var: result.stdout
